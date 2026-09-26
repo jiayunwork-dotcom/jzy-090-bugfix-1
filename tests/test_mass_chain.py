@@ -28,12 +28,16 @@ def test_chain_includes_all_upper_masses():
     assert top.mf == 1000.0 + 500.0
     assert top.m0 == top.mf + 3000.0
 
-    # 一级的上方质量必须包含上面级的"结构质量"（其推进剂已耗尽）+ 载荷
-    assert bottom.upper_mass == 1000.0 + 500.0
-    assert bottom.mf == 2000.0 + 1500.0
+    # 一级点火时上面级尚未工作、推进剂满箱，因此其"上方质量"必须包含
+    # 上面级的全部点火质量（结构 1000 + 推进剂 3000 + 载荷 500 = 4500），
+    # 而不能只算上面级耗尽后的结构 + 载荷。
+    assert bottom.upper_mass == 1000.0 + 3000.0 + 500.0
+    assert bottom.mf == 2000.0 + 4500.0
     assert bottom.m0 == bottom.mf + 8000.0
 
     assert liftoff_mass(chain) == bottom.m0
+    # 起飞质量 = 全部结构 + 全部推进剂 + 载荷
+    assert liftoff_mass(chain) == 2000.0 + 8000.0 + 1000.0 + 3000.0 + 500.0
 
 
 def test_total_is_sum_of_stages_not_single_log():

@@ -89,3 +89,26 @@ def test_reference_endpoint(client):
     assert body["staging_better_on_ideal"] is True
     assert body["two_stage"]["stage_count"] == 2
     assert body["single_stage_comparator"]["stage_count"] == 1
+
+
+def test_builtin_reference_numbers_are_physical():
+    # 修正质量链后的内置基准：所有结构 + 所有推进剂 + 载荷 = 22000 kg；
+    # 逐级 m0/mf 与起飞质量都要对得上。
+    ref = run_reference()
+    two = ref["two_stage"]
+    assert two["liftoff_mass_kg"] == 22000.0
+    bottom, top = two["stages"]
+    assert top["m0_kg"] == 12000.0 and top["mf_kg"] == 4000.0
+    assert bottom["upper_mass_kg"] == 12000.0
+    assert bottom["m0_kg"] == 22000.0 and bottom["mf_kg"] == 14000.0
+    assert two["ideal_total_delta_v_mps"] == pytest.approx(4961.9, abs=0.1)
+
+    # 单级对照不随本次修复改变
+    one = ref["single_stage_comparator"]
+    assert one["liftoff_mass_kg"] == 22000.0
+    assert one["ideal_total_delta_v_mps"] == pytest.approx(4157.7, abs=0.1)
+
+    # 分级仍明显优于塞单级
+    assert two["ideal_total_delta_v_mps"] > one["ideal_total_delta_v_mps"]
+    assert ref["staging_better_on_ideal"] is True
+    assert ref["staging_better_on_net"] is True

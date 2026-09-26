@@ -33,6 +33,7 @@ from app.core.errors import (
     RocketValidationError,
 )
 from app.core.losses import VALID_DRAG_MODES
+from app.core.staging import iterate_mass_chain
 from app.core.errors import BAD_DRAG_MODE, NON_POSITIVE_DRAG_VALUE
 
 
@@ -184,12 +185,14 @@ def validate_configuration(raw_config: Any) -> None:
 
     validate_drag(raw_config)
 
-    # 复用质量链定义，自顶向下检查 m0 > mf 且 mf > 0。
-    upper_mass = payload
-    for i in range(len(stages) - 1, -1, -1):
-        s = stages[i]
-        mf = s["structural_mass"] + upper_mass
-        m0 = mf + s["propellant_mass"]
+    # 直接复用质量链的唯一递推口径（iterate_mass_chain 自顶向下产出），
+    # 保证校验时认定的 m0/mf 与引擎实际计算完全一致：对每一级 m0 > mf
+    # 且 mf > 0。
+    structural_masses = [s["structural_mass"] for s in stages]
+    propellant_masses = [s["propellant_mass"] for s in stages]
+    for i, _ms, _mp, _upper, m0, mf in iterate_mass_chain(
+        structural_masses, propellant_masses, payload
+    ):
         if mf <= 0:
             raise RocketValidationError(
                 NON_POSITIVE_MF,
@@ -204,7 +207,6 @@ def validate_configuration(raw_config: Any) -> None:
                 "无法产生正的质量比（推进剂质量必须为正）",
                 stage_index=i,
             )
-        upper_mass = mf
 
 
 def validate_batch(raw_configs: Any) -> None:
