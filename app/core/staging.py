@@ -63,8 +63,10 @@ def build_mass_chain(
                 mass_ratio=_mass_ratio(m0, mf),
             )
         )
-        # 本级分离后，对下一级而言"上方质量"包含本级结构（推进剂已耗尽）
-        upper_mass = mf
+        # 更靠下的下一级点火时，本级仍满载推进剂挂在箭上，
+        # 故传递给下方的"上方质量"是本级点火质量 m0（含本级推进剂），
+        # 而不是本级耗尽质量 mf——推进剂要由下面各级一路扛到分离。
+        upper_mass = m0
     return list(reversed(reversed_masses))
 
 

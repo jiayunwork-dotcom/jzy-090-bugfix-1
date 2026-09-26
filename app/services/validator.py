@@ -204,7 +204,9 @@ def validate_configuration(raw_config: Any) -> None:
                 "无法产生正的质量比（推进剂质量必须为正）",
                 stage_index=i,
             )
-        upper_mass = mf
+        # 与 app.core.staging.build_mass_chain 同一口径：
+        # 下方各级点火时上方级仍满载，上方质量按上级点火质量 m0 回推。
+        upper_mass = m0
 
 
 def validate_batch(raw_configs: Any) -> None:
